@@ -25,7 +25,7 @@ namespace DepartmentsEmployees.Data
                 return new SqlConnection(_connectionString);
             }
         }
-
+          
         /// <summary>
         ///  Returns a list of all departments in the database
         /// </summary>

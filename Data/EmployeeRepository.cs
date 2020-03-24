@@ -90,10 +90,67 @@ namespace DepartmentsEmployees.Data
             }
         }
 
-     /// <summary>
-     ///  Returns a single department with the given id.
-     /// </summary>
-            public Employee GetEmployeeById(int employeeid)
+        public List<Employee> GetAllEmployees()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.DepartmentId, d.Id, d.DeptName
+                      FROM Employee e
+                      LEFT JOIN Department d
+                      ON e.DepartmentId = d.Id";
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    List<Employee> employees = new List<Employee>();
+
+                    while (reader.Read())
+                    {
+                        int idColumn = reader.GetOrdinal("Id");
+                        int idValue = reader.GetInt32(idColumn);
+
+                        int firstNameColumn = reader.GetOrdinal("FirstName");
+                        string firstNameValue = reader.GetString(firstNameColumn);
+
+                        int lastNameColumn = reader.GetOrdinal("LastName");
+                        string lastNameValue = reader.GetString(lastNameColumn);
+
+                        int departmentIdColumn = reader.GetOrdinal("DepartmentId");
+                        int departmentValue = reader.GetInt32(departmentIdColumn);
+
+                        int departmentNameColumn = reader.GetOrdinal("DeptName");
+                        string departmentNameValue = reader.GetString(departmentNameColumn);
+
+                        var employee = new Employee()
+                        {
+                            Id = idValue,
+                            FirstName = firstNameValue,
+                            LastName = lastNameValue,
+                            DepartmentId = departmentValue,
+                            Department = new Department()
+                            {
+                                Id = departmentValue,
+                                DeptName = departmentNameValue
+                            }
+                        };
+
+                        employees.Add(employee);
+                    }
+
+                    reader.Close();
+
+                    return employees;
+                }
+            }
+        }
+
+        /// <summary>
+        ///  Returns a single department with the given id.
+        /// </summary>
+        public Employee GetEmployeeById(int employeeid)
         {
             using (SqlConnection conn = Connection)
             {
@@ -188,7 +245,7 @@ namespace DepartmentsEmployees.Data
             // when this method is finished we can look in the database and see the new department.
         }
 
-        public void UpdateEmployee(int employeeId, Employee employee)
+        public void UpdateEmployee(int Id, Employee employee)
         {
             using (SqlConnection conn = Connection)
             {
@@ -197,13 +254,13 @@ namespace DepartmentsEmployees.Data
                 {
                     cmd.CommandText = @"
                         UPDATE Employee
-                        SET FirstName = @firstName, LastName = @lastName, DepartmentId = @departmentId
+                        SET Id = @id FirstName = @firstName, LastName = @lastName, DepartmentId = @departmentId
                         WHERE Id = @id";
 
+                    cmd.Parameters.Add(new SqlParameter("@id", Id));
                     cmd.Parameters.Add(new SqlParameter("@firstName", employee.FirstName));
                     cmd.Parameters.Add(new SqlParameter("@lastName", employee.LastName));
                     cmd.Parameters.Add(new SqlParameter("@departmentId", employee.DepartmentId));
-                    cmd.Parameters.Add(new SqlParameter("@id", employee.Id));
 
                     cmd.ExecuteNonQuery();
                 }
@@ -213,7 +270,7 @@ namespace DepartmentsEmployees.Data
         /// <summary>
         ///  Delete the department with the given id
         /// </summary>
-        public void DeleteEmployee(int employeeid)
+        public void DeleteEmployee(int employeeId)
         {
             using (SqlConnection conn = Connection)
             {
@@ -221,7 +278,7 @@ namespace DepartmentsEmployees.Data
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "DELETE FROM Employee WHERE Id = @id";
-                    cmd.Parameters.Add(new SqlParameter("@id", employeeid));
+                    cmd.Parameters.Add(new SqlParameter("@id", employeeId));
                     cmd.ExecuteNonQuery();
                 }
             }
